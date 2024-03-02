@@ -65,7 +65,7 @@ def write_array_to_file(array, filename):
             file.write(str(item) + "\n")
 
 
-def write_tuple_data_to_file(tuple_data, filename):
+def write_tuple_F3_data_to_file(tuple_data, filename):
     """
     Записывает данные из кортежа в файл.
 
@@ -90,6 +90,31 @@ def write_tuple_data_to_file(tuple_data, filename):
             dispersion = dispersion_list[i]
             file.write(f"{point[0]} {point[1]} {brightness} {dispersion}\n")
 
+def write_tuple_F5_data_to_file(tuple_data, filename):
+    """
+    Записывает данные из кортежа в файл.
+
+    Аргументы:
+    - tuple_data (tuple): Кортеж с данными.
+    - filename (str): Имя файла для записи.
+
+    Возвращает:
+    None
+    """
+    tuple_data = tuple_data
+    # Открываем файл для записи
+    with open(filename, "w") as file:
+        # Распаковываем кортеж
+        points = tuple_data[0]
+        brightness_list = tuple_data[3]
+        dispersion_list = tuple_data[4]
+        # Записываем данные в файл
+        for i in range(len(points)):
+            point = points[i]
+            brightness = brightness_list[i]
+            dispersion = dispersion_list[i]
+            file.write(f"{point[0]} {point[1]} {brightness} {dispersion}\n")
+
 
 
 input_folder = "Input"
@@ -97,8 +122,9 @@ input_folder = "Input"
 all_lab_points = create_analyzers(input_folder)
 
 tuple_data = all_lab_points[0]  # Получаем кортеж из output_list
-write_tuple_data_to_file(tuple_data, "output.txt")  # Передаем кортеж в функцию write_tuple_data_to_file
+write_tuple_F3_data_to_file(tuple_data, "outputF3.txt")  # Передаем кортеж в функцию write_tuple_data_to_file
 
+write_tuple_F5_data_to_file(tuple_data, "outputF5.txt")  # Передаем кортеж в функцию write_tuple_data_to_file
 
 
 

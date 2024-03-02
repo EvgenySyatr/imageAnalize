@@ -47,6 +47,35 @@ class PixelBrightnessAnalyzer:
             surrounding_pixels_brightness.append(brightness)
         return surrounding_pixels_brightness
 
+    def get_surrounding_pixel_brightness_25(self, x, y, image_name):
+        """
+        Получает яркость 25 соседних пикселей вокруг заданной точки.
+
+        Аргументы:
+        x (int): Координата x центрального пикселя.
+        y (int): Координата y центрального пикселя.
+        image_name (str): Имя файла изображения.
+
+        Возвращает:
+        list: Список со значениями яркости 25 соседних пикселей вокруг центрального пикселя.
+        """
+        surrounding_pixels_brightness = []
+
+        # Координаты всех 25 пикселей (включая изначальную точку)
+        neighbors_coordinates = [
+            (x - 2, y - 2), (x - 1, y - 2), (x, y - 2), (x + 1, y - 2), (x + 2, y - 2),
+            (x - 2, y - 1), (x - 1, y - 1), (x, y - 1), (x + 1, y - 1), (x + 2, y - 1),
+            (x - 2, y), (x - 1, y), (x, y), (x + 1, y), (x + 2, y),
+            (x - 2, y + 1), (x - 1, y + 1), (x, y + 1), (x + 1, y + 1), (x + 2, y + 1),
+            (x - 2, y + 2), (x - 1, y + 2), (x, y + 2), (x + 1, y + 2), (x + 2, y + 2)
+        ]
+
+        # Получаем яркость каждого соседнего пикселя
+        for coord_x, coord_y in neighbors_coordinates:
+            brightness = self.get_pixel_brightness(coord_x, coord_y, image_name)
+            surrounding_pixels_brightness.append(brightness)
+        return surrounding_pixels_brightness
+
     def analyze_pixel_and_surroundings(self, x, y, image_name):
         """
         Анализирует среднюю яркость для заданной точки и ее 8 соседей.
@@ -61,6 +90,26 @@ class PixelBrightnessAnalyzer:
         """
         # Получаем значения яркости заданной точки и ее 8 соседей
         surrounding_brightness = self.get_surrounding_pixel_brightness(x, y, image_name)
+
+        # Средняя яркость
+        mean_brightness = sum(surrounding_brightness) / len(surrounding_brightness)
+
+        return mean_brightness
+
+    def analyze_pixel_and_surroundings_25(self, x, y, image_name):
+        """
+        Анализирует среднюю яркость для заданной точки и ее 25 соседей.
+
+        Аргументы:
+        x (int): Координата x заданной точки.
+        y (int): Координата y заданной точки.
+        image_name (str): Имя файла изображения.
+
+        Возвращает:
+        float: Средняя яркость заданной точки и ее 25 соседей.
+        """
+        # Получаем значения яркости заданной точки и ее 25 соседей
+        surrounding_brightness = self.get_surrounding_pixel_brightness_25(x, y, image_name)
 
         # Средняя яркость
         mean_brightness = sum(surrounding_brightness) / len(surrounding_brightness)
@@ -271,6 +320,10 @@ class PixelBrightnessAnalyzer:
         brightness_list = []
         dispersion_list = []
 
+        # F5
+        brightness_list_5x5 = []
+        dispersion_list_5x5 = []
+
         # Определяем размеры изображения
         width = 179
         height = 239
@@ -301,30 +354,40 @@ class PixelBrightnessAnalyzer:
             if max_dispersion_point is not None:
                 pointX = max_dispersion_point[0]
                 pointY = max_dispersion_point[1]
-                # Получаем координаты точки справа от найденного максимума
+                # Для возможности сместить точку влево, вправо или вниз
                 next_point = (pointX, pointY)
                 max_dispersion_points.append(next_point)
 
                 brightness_list.append(self.analyze_pixel_and_surroundings(pointX, pointY, self.image_name))
+                brightness_list_5x5.append(self.analyze_pixel_and_surroundings_25(pointX, pointY, self.image_name))
                 # Получаем яркость окружающих пикселей для измененной текущей точки
                 surrounding_brightness = self.get_surrounding_pixel_brightness(pointX, pointY, self.image_name)
+                surrounding_brightness_5x5 = self.get_surrounding_pixel_brightness_25(pointX, pointY, self.image_name)
                 # Вычисляем дисперсию яркостей окружающих пикселей
                 dispersion = self.dispersion_by_brightness_list(surrounding_brightness)
                 dispersion_list.append(dispersion)
-                print(f"[ {pointX};{pointY} ] {self.analyze_pixel_and_surroundings(pointX, pointY, self.image_name)} {dispersion}")  # Выводим координаты точки
+                dispersion_5x5 = self.dispersion_by_brightness_list(surrounding_brightness_5x5)
+                dispersion_list_5x5.append(dispersion_5x5)
+                print(f"[ {pointX};{pointY} ] {self.analyze_pixel_and_surroundings(pointX, pointY, self.image_name)} {dispersion} "
+                      f"| F5 | {self.analyze_pixel_and_surroundings_25(pointX, pointY, self.image_name)} {dispersion_5x5}")  # Выводим координаты точки
 
         right_side_cort = self.track_max_dispersion_points_From_Right_To_Left(dispersion_background, step_size)
         max_dispersion_points += right_side_cort[0]
         brightness_list += right_side_cort[1]
         dispersion_list += right_side_cort[2]
+        brightness_list_5x5 += right_side_cort[3]
+        dispersion_list_5x5 += right_side_cort[4]
+
         # записываем в выходной файл координаты точек
         self.write_coordinates_to_file(max_dispersion_points)
-        return max_dispersion_points, brightness_list, dispersion_list
+        return max_dispersion_points, brightness_list, dispersion_list, brightness_list_5x5, dispersion_list_5x5
 
     def track_max_dispersion_points_From_Right_To_Left(self, dispersion_background, step_size=6):
         max_dispersion_points = []
         brightness_list = []
         dispersion_list = []
+        brightness_list_5x5 = []
+        dispersion_list_5x5 = []
         # Определяем размеры изображения
         width = 179
         height = 239
@@ -356,20 +419,25 @@ class PixelBrightnessAnalyzer:
             if max_dispersion_point is not None:
                 pointX = max_dispersion_point[0]
                 pointY = max_dispersion_point[1]
-                # Получаем координаты точки справа от найденного максимума
+                # Для возможности сместить точку влево, вправо или вниз
                 next_point = (pointX, pointY)
                 max_dispersion_points.append(next_point)
 
                 brightness_list.append(self.analyze_pixel_and_surroundings(pointX, pointY, self.image_name))
+                brightness_list_5x5.append(self.analyze_pixel_and_surroundings_25(pointX, pointY, self.image_name))
                 # Получаем яркость окружающих пикселей для измененной текущей точки
                 surrounding_brightness = self.get_surrounding_pixel_brightness(pointX, pointY, self.image_name)
+                surrounding_brightness_5x5 = self.get_surrounding_pixel_brightness_25(pointX, pointY, self.image_name)
                 # Вычисляем дисперсию яркостей окружающих пикселей
                 dispersion = self.dispersion_by_brightness_list(surrounding_brightness)
                 dispersion_list.append(dispersion)
+                dispersion_5x5 = self.dispersion_by_brightness_list(surrounding_brightness_5x5)
+                dispersion_list_5x5.append(dispersion_5x5)
                 print(
-                    f"[ {pointX};{pointY} ] {self.analyze_pixel_and_surroundings(pointX, pointY, self.image_name)} {dispersion}")  # Выводим координаты точки
+                    f"[ {pointX};{pointY} ] {self.analyze_pixel_and_surroundings(pointX, pointY, self.image_name)} {dispersion} "
+                    f"| F5 | {self.analyze_pixel_and_surroundings_25(pointX, pointY, self.image_name)} {dispersion_5x5}")  # Выводим координаты точки
 
-        return max_dispersion_points, brightness_list, dispersion_list
+        return max_dispersion_points, brightness_list, dispersion_list, brightness_list_5x5, dispersion_list_5x5
 
     def write_coordinates_to_file(self, coordinates):
         """
