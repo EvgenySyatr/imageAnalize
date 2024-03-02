@@ -63,5 +63,8 @@ input_folder = "Input"
 
 # Создаем объект
 analyzer = ba.PixelBrightnessAnalyzer(input_folder)
-analyzer.track_max_dispersion_points(20)
+points_for_lab = analyzer.track_max_dispersion_points(20)
+print("Вывод точек")
+for i in range(0, len(points_for_lab[0])):
+    print(f"{points_for_lab[0][i]} {points_for_lab[1][i]} {points_for_lab[2][i]}")
 
