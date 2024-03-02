@@ -3,18 +3,6 @@ import blackWhiteConverter as bwc
 import brightnessAnalyzer as ba
 import os
 
-"""
-blackWhite converter после imageCropper!!!
-"""
-
-# Создаем экземпляр класса ImageCropper
-cropper = ic.ImageCropper()
-# Вызываем метод crop_images
-# cropper.crop_images()
-# cropper.rename_output_images("Image")
-
-# bw = bwc.BlackAndWhiteConverter()
-# bw.convert_to_black_and_white()
 
 def get_bmp_filenames(input_folder):
     """
@@ -37,10 +25,9 @@ def get_bmp_filenames(input_folder):
             bmp_filenames.append(file)
     return bmp_filenames
 
+
 def extract_number(filename):
     return int(filename.split('Image')[1].split('.')[0])
-
-
 
 
 def get_start_index():
@@ -57,8 +44,10 @@ def get_start_index():
     if len(existing_points_files) > 1:
         existing_points_files.sort(key=lambda x: int(x[6:-4]))
         start_index = int(existing_points_files[-2][6:-4])
-    else:
+    elif len(existing_points_files) == 1:
         start_index = 1
+    else:
+        start_index = 0
     return start_index
 
 
@@ -76,8 +65,7 @@ def create_analyzers(input_folder):
     start_index = get_start_index()
 
     for i in range(start_index + 1, len(bmp_filenames) + 1):
-
-        bmp_filename = bmp_filenames[i]
+        bmp_filename = bmp_filenames[i - 1]
         image_name = os.path.splitext(bmp_filename)[0]  # Получаем имя файла без расширения
         points_file = f"points{i}.txt"  # Генерируем имя файла для сохранения точек
         analyzer = ba.PixelBrightnessAnalyzer(input_folder, image_name + ".bmp", points_file, "Output")
@@ -123,10 +111,12 @@ def create_analyzers_from_points_files(output_folder):
 
     return analyzers
 
+
 def write_array_to_file(array, filename):
     with open(filename, "w") as file:
         for item in array:
             file.write(str(item) + "\n")
+
 
 def write_tuple_F3_data_to_file(tuple_data, filename):
     """
@@ -192,16 +182,6 @@ def clear_files(*filenames):
     for filename in filenames:
         with open(filename, "w") as file:
             file.truncate(0)
-
-
-# input_folder = "Input"
-
-# all_lab_points = create_analyzers(input_folder)
-
-# tuple_data = all_lab_points[0]  # Получаем кортеж из output_list
-# write_tuple_F3_data_to_file(tuple_data, "outputF3.txt")  # Передаем кортеж в функцию write_tuple_data_to_file
-
-# write_tuple_F5_data_to_file(tuple_data, "outputF5.txt")  # Передаем кортеж в функцию write_tuple_data_to_file
 
 def clear_console():
     os.system('cls' if os.name == 'nt' else 'clear')
