@@ -1,10 +1,15 @@
 from PIL import Image
 import os
+import numpy as np
+import matplotlib.pyplot as plt
 
 
 class PixelBrightnessAnalyzer:
-    def __init__(self, input_folder):
+    def __init__(self, input_folder, image_name="Image1.bmp", points_file="file_output.txt"):
+        self.points_file = points_file
+        self.image_name = image_name
         self.input_folder = input_folder
+        self.image = Image.open(os.path.join(input_folder, image_name))
 
     def get_pixel_brightness(self, x, y, image_name):
         img_path = os.path.join(self.input_folder, image_name)
@@ -119,17 +124,18 @@ class PixelBrightnessAnalyzer:
         image_name (str): Имя файла изображения.
 
         Вывод:
-        None
+        brightness, dispersion
         """
         # Получаем яркость точки
         brightness = self.get_pixel_brightness(x, y, image_name)
 
         # Анализируем среднюю яркость для точки и ее соседей
         surrounding_brightness = self.get_surrounding_pixel_brightness(x, y, image_name)
-        variance = self.dispersion_by_brightness_list(surrounding_brightness)
+        dispersion = self.dispersion_by_brightness_list(surrounding_brightness)
 
         # Выводим информацию
-        print(f"Координаты точки: ({x}, {y}) Яркость: {brightness} Дисперсия: {variance}")
+        print(f"Координаты точки: ({x}, {y}) Яркость: {brightness} Дисперсия: {dispersion}")
+        return brightness, dispersion
 
     def analyze_points_from_file(self, file_name, image_name):
         """
@@ -140,16 +146,213 @@ class PixelBrightnessAnalyzer:
         image_name (str): Имя файла изображения.
 
         Вывод:
-        None
+        brightList, dispList
         """
         # Получаем список точек из текстового файла
         points = self.get_points_from_file(file_name)
-
+        brightList = []
+        dispList = []
         # Проходим по каждой точке и анализируем ее
         for point in points:
             x, y = point
-            self.analyze_point(x, y, image_name)
+            currBright, currDisp = self.analyze_point(x, y, image_name)
+            brightList.append(currBright)
+            dispList.append(currDisp)
 
+        return brightList, dispList
 
+    def get_background_dispersion(self):
+        """
+        Находит максимальную дисперсию для точек фона в области шириной 10 пикселей вверху изображения.
 
+        Возвращает:
+        float: Максимальная дисперсия для точек фона.
+        """
+        # Определяем размеры изображения
+        width, height = self.image.size
 
+        # Ширина области по краю, которую мы исследуем (например, 10 пикселей)
+        border_width = 10
+
+        # Создаем список для хранения дисперсий фона
+        background_dispersion_list = []
+
+        # Проходим по области верхнего края изображения
+        for x in range(border_width, width - border_width):
+            for y in range(border_width):
+                print(f"[ {x}; {y} ]")
+                # Для каждой точки в области верхнего края получаем яркость окружающих пикселей
+                surrounding_brightness = self.get_surrounding_pixel_brightness(x, y, self.image_name)
+
+                # Вычисляем дисперсию яркостей окружающих пикселей
+                dispersion = self.dispersion_by_brightness_list(surrounding_brightness)
+
+                # Добавляем дисперсию в список
+                background_dispersion_list.append(dispersion)
+
+        # Находим максимальную дисперсию
+        max_dispersion = max(background_dispersion_list)
+
+        return max_dispersion
+
+    def visualize_explored_area(self):
+        """
+        Визуализирует область, которая была исследована для поиска максимальной дисперсии.
+
+        Возвращает:
+        None
+        """
+        # Создаем изображение для визуализации
+        explored_area = np.zeros_like(self.image)
+
+        # Определяем размеры изображения
+        width, height = self.image.size
+
+        # Ширина области по краю, которую мы исследуем (например, 10 пикселей)
+        border_width = 10
+
+        # Проходим по области верхнего края изображения
+        for x in range(border_width, width - border_width):
+            for y in range(border_width):
+                # Метим точку на изображении как исследованную
+                explored_area[y, x] = 255  # Белый цвет
+
+        # Визуализируем исследованную область
+        plt.imshow(explored_area, cmap='gray')
+        plt.title('Explored Area')
+        plt.axis('off')
+        plt.show()
+
+    def save_explored_area(self, output_file):
+        """
+        Сохраняет исследованную область в новом файле .bmp с сохранением яркости и цвета каждого пикселя.
+
+        Аргументы:
+        output_file (str): Имя выходного файла.
+
+        Возвращает:
+        None
+        """
+        # Создаем копию изображения для визуализации
+        explored_area = Image.new("RGB", self.image.size)
+
+        # Определяем размеры изображения
+        width, height = self.image.size
+
+        # Ширина области по краю, которую мы исследуем (например, 10 пикселей)
+        border_width = 10
+
+        # Проходим по области верхнего края изображения
+        for x in range(border_width, width - border_width):
+            for y in range(border_width):
+                # Получаем яркость и цвет пикселя из оригинального изображения
+                brightness = self.get_pixel_brightness(x, y, self.image_name)
+                color = self.image.getpixel((x, y))
+                # Устанавливаем яркость и цвет пикселя в исследованной области
+                explored_area.putpixel((x, y), color)
+
+        # Сохраняем изображение в файле .bmp
+        explored_area.save(output_file)
+
+    def track_max_dispersion_points(self, dispersion_background, step_size=6):
+        """
+        Отслеживает максимальные точки дисперсии на изображении.
+
+        Аргументы:
+        dispersion_background (float): Значение дисперсии фона.
+        step_size (int): Размер шага при перемещении по вертикали.
+
+        Возвращает:
+        list: Список точек с максимальной дисперсией.
+        """
+        max_dispersion_points = []  # Список для хранения точек с максимальной дисперсией
+
+        # Определяем размеры изображения
+        width = 179
+        height = 239
+        # Проходим по каждой вертикальной полосе изображения
+        for y in range(0, height, step_size):
+            max_dispersion = 0  # Максимальная дисперсия в текущей полосе
+            max_dispersion_point = None  # Точка с максимальной дисперсией в текущей полосе
+
+            # Начинаем с верхней части изображения и двигаемся вниз с шагом step_size
+            for x in range(width):
+                # Проверяем, находятся ли координаты в пределах изображения
+                if 0 <= x < width and 0 <= y < height:
+                    # Получаем яркость окружающих пикселей для текущей точки
+                    surrounding_brightness = self.get_surrounding_pixel_brightness(x, y, self.image_name)
+
+                    # Вычисляем дисперсию яркостей окружающих пикселей
+                    dispersion = self.dispersion_by_brightness_list(surrounding_brightness)
+                    print(f"[ {x};{y} ] {dispersion}")
+                    # Если текущая дисперсия больше дисперсии фона, начинаем отслеживать максимум
+                    if dispersion > dispersion_background:
+                        if dispersion > max_dispersion:
+                            max_dispersion = dispersion
+                            max_dispersion_point = (x, y)
+
+                        # Пропускаем остальные точки данного уровня
+                        break
+
+            # Если найден максимум на текущем уровне, добавляем его в список
+            if max_dispersion_point is not None:
+                max_dispersion_points.append(max_dispersion_point)
+                print(f"{max_dispersion_point[0]} {max_dispersion_point[1]}")  # Выводим координаты точки
+
+        max_dispersion_points += self.track_max_dispersion_points_From_Right_To_Left(dispersion_background)
+        self.write_coordinates_to_file(max_dispersion_points)
+        return max_dispersion_points
+
+    def track_max_dispersion_points_From_Right_To_Left(self, dispersion_background, step_size=6):
+        max_dispersion_points = []
+        # Определяем размеры изображения
+        width = 179
+        height = 239
+        # Проходим по каждой вертикальной полосе изображения
+        for y in range(0, height, step_size):
+            max_dispersion = 0  # Максимальная дисперсия в текущей полосе
+            max_dispersion_point = None  # Точка с максимальной дисперсией в текущей полосе
+
+            # Начинаем с верхней части изображения и двигаемся вниз с шагом step_size
+            for x in range(359, 180, -1):
+                # Проверяем, находятся ли координаты в пределах изображения
+                if 180 <= x < 359 and 0 <= y < height:
+                    # Получаем яркость окружающих пикселей для текущей точки
+                    surrounding_brightness = self.get_surrounding_pixel_brightness(x, y, self.image_name)
+
+                    # Вычисляем дисперсию яркостей окружающих пикселей
+                    dispersion = self.dispersion_by_brightness_list(surrounding_brightness)
+                    print(f"[ {x};{y} ] {dispersion}")
+                    # Если текущая дисперсия больше дисперсии фона, начинаем отслеживать максимум
+                    if dispersion > dispersion_background:
+                        if dispersion > max_dispersion:
+                            max_dispersion = dispersion
+                            max_dispersion_point = (x, y)
+
+                        # Пропускаем остальные точки данного уровня
+                        break
+
+            # Если найден максимум на текущем уровне, добавляем его в список
+            if max_dispersion_point is not None:
+                max_dispersion_points.append(max_dispersion_point)
+                print(f"{max_dispersion_point[0]} {max_dispersion_point[1]}")  # Выводим координаты точки
+        return max_dispersion_points
+
+    def write_coordinates_to_file(self, coordinates):
+        """
+        Записывает координаты точек в файл.
+
+        Аргументы:
+        coordinates (list): Список координат точек.
+
+        Возвращает:
+        None
+        """
+        total_points = len(coordinates)
+
+        with open(self.points_file, "w") as file:
+            file.write(f"{str(total_points).zfill(4)}\n")
+            for coord in coordinates:
+                x_str = str(coord[0]).zfill(4)  # Добавляем нули спереди до 4 цифр
+                y_str = str(coord[1]).zfill(4)  # Добавляем нули спереди до 4 цифр
+                file.write(f"{x_str} {y_str}\n")

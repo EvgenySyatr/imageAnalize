@@ -2,7 +2,7 @@ from PIL import Image
 import os
 
 class BlackAndWhiteConverter:
-    def __init__(self, input_folder, output_folder):
+    def __init__(self, input_folder="Input", output_folder="Input"):
         self.input_folder = input_folder
         self.output_folder = output_folder
 
