@@ -54,7 +54,7 @@ def create_analyzers(input_folder):
 
 
 input_folder = "Input"
-create_analyzers(input_folder)
+# create_analyzers(input_folder)
 
 
 
@@ -63,19 +63,5 @@ create_analyzers(input_folder)
 
 # Создаем объект
 analyzer = ba.PixelBrightnessAnalyzer(input_folder)
-
-# file_name = "image2.bmp"
-#points = analyzer.get_surrounding_pixel_brightness(x, y, file_name) #Яркость по точке центральной
-#disp = analyzer.calculate_brightness_variance(x, y, file_name) # дисперсия по точке центральной
-#print(f"0008 0007 Средняя яркость: {analyzer.analyze_pixel_and_surroundings(8, 7, file_name)} Средняя дисперсия: {disp}")
-
-
-# print(analyzer.get_pixel_brightness(27, 21, "Image2.bmp"))
-# analyzer.analyze_points_from_file("points.txt", "Image1.bmp")
-# print(analyzer.get_background_dispersion())
-# analyzer.visualize_explored_area()
-# analyzer.save_explored_area("gg.bmp")
-# print(analyzer.track_max_dispersion_points(40))
-
-# coordinates = analyzer.track_max_dispersion_points(20) # указываем максимальную дисперсию для фона
+analyzer.track_max_dispersion_points(20)
 

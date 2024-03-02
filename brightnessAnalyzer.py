@@ -266,6 +266,7 @@ class PixelBrightnessAnalyzer:
         list: Список точек с максимальной дисперсией.
         """
         max_dispersion_points = []  # Список для хранения точек с максимальной дисперсией
+        suttBright = 0
 
         # Определяем размеры изображения
         width = 179
@@ -284,7 +285,7 @@ class PixelBrightnessAnalyzer:
 
                     # Вычисляем дисперсию яркостей окружающих пикселей
                     dispersion = self.dispersion_by_brightness_list(surrounding_brightness)
-                    print(f"[ {x};{y} ] {dispersion}")
+                    # print(f"[ {x};{y} ] {dispersion}")
                     # Если текущая дисперсия больше дисперсии фона, начинаем отслеживать максимум
                     if dispersion > dispersion_background:
                         if dispersion > max_dispersion:
@@ -296,8 +297,10 @@ class PixelBrightnessAnalyzer:
 
             # Если найден максимум на текущем уровне, добавляем его в список
             if max_dispersion_point is not None:
-                max_dispersion_points.append(max_dispersion_point)
-                print(f"{max_dispersion_point[0]} {max_dispersion_point[1]}")  # Выводим координаты точки
+                # Получаем координаты точки справа от найденного максимума
+                next_point = (max_dispersion_point[0], max_dispersion_point[1])
+                max_dispersion_points.append(next_point)
+                print(f"[ {next_point[0]};{next_point[1]} ] {self.analyze_pixel_and_surroundings(next_point[0], next_point[1], self.image_name)}")  # Выводим координаты точки
 
         max_dispersion_points += self.track_max_dispersion_points_From_Right_To_Left(dispersion_background)
         self.write_coordinates_to_file(max_dispersion_points)
@@ -322,7 +325,7 @@ class PixelBrightnessAnalyzer:
 
                     # Вычисляем дисперсию яркостей окружающих пикселей
                     dispersion = self.dispersion_by_brightness_list(surrounding_brightness)
-                    print(f"[ {x};{y} ] {dispersion}")
+                    # print(f"[ {x};{y} ] {dispersion}")
                     # Если текущая дисперсия больше дисперсии фона, начинаем отслеживать максимум
                     if dispersion > dispersion_background:
                         if dispersion > max_dispersion:
@@ -334,8 +337,10 @@ class PixelBrightnessAnalyzer:
 
             # Если найден максимум на текущем уровне, добавляем его в список
             if max_dispersion_point is not None:
-                max_dispersion_points.append(max_dispersion_point)
-                print(f"{max_dispersion_point[0]} {max_dispersion_point[1]}")  # Выводим координаты точки
+                # Получаем координаты точки слева от найденного максимума
+                next_point = (max_dispersion_point[0] - 1, max_dispersion_point[1])
+                max_dispersion_points.append(next_point)
+                print(f"{next_point[0]} {next_point[1]}")  # Выводим координаты точки
         return max_dispersion_points
 
     def write_coordinates_to_file(self, coordinates):
