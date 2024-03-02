@@ -5,12 +5,33 @@ import matplotlib.pyplot as plt
 
 
 class PixelBrightnessAnalyzer:
-    def __init__(self, input_folder, image_name="Image1.bmp", points_file="file_output.txt", output_folder="Output"):
+    def __init__(self, input_folder, image_name="Image1.bmp", points_file="points1.txt", output_folder="Output"):
         self.points_file = points_file
         self.image_name = image_name
         self.input_folder = input_folder
         self.image = Image.open(os.path.join(input_folder, image_name))
         self.output_folder = output_folder
+
+    def get_points_from_points_file(self):
+        """
+        Получает список точек из файла pointsN.txt.
+
+        Возвращает:
+        - points (list): Список координат точек.
+        """
+        points = []
+        file_path = self.points_file
+        # Открываем файл pointsN.txt
+        with open(file_path, "r") as file:
+            # Читаем строки из файла
+            lines = file.readlines()
+            # Начиная со второй строки, обрабатываем каждую строку
+            for line in lines[1:]:
+                # Разбиваем строку на координаты x и y
+                x, y = map(int, line.strip().split())
+                points.append((x, y))
+
+        return points
 
     def get_pixel_brightness(self, x, y, image_name):
         img_path = os.path.join(self.input_folder, image_name)
@@ -438,6 +459,42 @@ class PixelBrightnessAnalyzer:
                     f"| F5 | {self.analyze_pixel_and_surroundings_25(pointX, pointY, self.image_name)} {dispersion_5x5}")  # Выводим координаты точки
 
         return max_dispersion_points, brightness_list, dispersion_list, brightness_list_5x5, dispersion_list_5x5
+
+    def fill_lists(self, point_list):
+        """
+        Заполняет списки яркости и дисперсии для указанных точек и их 5x5 окрестностей.
+
+        Аргументы:
+        - point_list (list): Список координат точек [(x1, y1), (x2, y2), ...].
+        - image_name (str): Имя файла изображения.
+
+        Возвращает:
+        - point_list (list): Список координат точек.
+        - brightness_list (list): Список значений яркости для каждой точки.
+        - dispersion_list (list): Список значений дисперсии для каждой точки.
+        - brightness_list_5x5 (list): Список значений яркости для каждой 5x5 окрестности.
+        - dispersion_list_5x5 (list): Список значений дисперсии для каждой 5x5 окрестности.
+        """
+        brightness_list = []
+        dispersion_list = []
+        brightness_list_5x5 = []
+        dispersion_list_5x5 = []
+
+        for point in point_list:
+            pointX, pointY = point
+            # Получаем яркость и дисперсию для текущей точки
+            brightness_list.append(self.analyze_pixel_and_surroundings(pointX, pointY, self.image_name))
+            brightness_list_5x5.append(self.analyze_pixel_and_surroundings_25(pointX, pointY, self.image_name))
+            # Получаем яркость окружающих пикселей для измененной текущей точки
+            surrounding_brightness = self.get_surrounding_pixel_brightness(pointX, pointY, self.image_name)
+            surrounding_brightness_5x5 = self.get_surrounding_pixel_brightness_25(pointX, pointY, self.image_name)
+            # Вычисляем дисперсию яркостей окружающих пикселей
+            dispersion = self.dispersion_by_brightness_list(surrounding_brightness)
+            dispersion_list.append(dispersion)
+            dispersion_5x5 = self.dispersion_by_brightness_list(surrounding_brightness_5x5)
+            dispersion_list_5x5.append(dispersion_5x5)
+
+        return point_list, brightness_list, dispersion_list, brightness_list_5x5, dispersion_list_5x5
 
     def write_coordinates_to_file(self, coordinates):
         """
