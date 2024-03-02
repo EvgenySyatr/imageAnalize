@@ -5,11 +5,12 @@ import matplotlib.pyplot as plt
 
 
 class PixelBrightnessAnalyzer:
-    def __init__(self, input_folder, image_name="Image1.bmp", points_file="file_output.txt"):
+    def __init__(self, input_folder, image_name="Image1.bmp", points_file="file_output.txt", output_folder="Output"):
         self.points_file = points_file
         self.image_name = image_name
         self.input_folder = input_folder
         self.image = Image.open(os.path.join(input_folder, image_name))
+        self.output_folder = output_folder
 
     def get_pixel_brightness(self, x, y, image_name):
         img_path = os.path.join(self.input_folder, image_name)
@@ -265,6 +266,7 @@ class PixelBrightnessAnalyzer:
         Возвращает:
         list: Список точек с максимальной дисперсией.
         """
+        step_size = step_size
         max_dispersion_points = []  # Список для хранения точек с максимальной дисперсией
         brightness_list = []
         dispersion_list = []
@@ -311,7 +313,7 @@ class PixelBrightnessAnalyzer:
                 dispersion_list.append(dispersion)
                 print(f"[ {pointX};{pointY} ] {self.analyze_pixel_and_surroundings(pointX, pointY, self.image_name)} {dispersion}")  # Выводим координаты точки
 
-        right_side_cort = self.track_max_dispersion_points_From_Right_To_Left(dispersion_background)
+        right_side_cort = self.track_max_dispersion_points_From_Right_To_Left(dispersion_background, step_size)
         max_dispersion_points += right_side_cort[0]
         brightness_list += right_side_cort[1]
         dispersion_list += right_side_cort[2]
@@ -380,8 +382,13 @@ class PixelBrightnessAnalyzer:
         None
         """
         total_points = len(coordinates)
+        file_path = os.path.join(self.output_folder, self.points_file)
+        file_path = os.path.join(os.getcwd(), file_path)
+        # Создаем папку Output, если ее еще нет
+        os.makedirs(os.path.join(os.getcwd(), self.output_folder), exist_ok=True)
 
-        with open(self.points_file, "w") as file:
+        print(f"Данные запишем в файл {file_path}")
+        with open(file_path, "w") as file:
             file.write(f"{str(total_points).zfill(4)}\n")
             for coord in coordinates:
                 x_str = str(coord[0]).zfill(4)  # Добавляем нули спереди до 4 цифр
