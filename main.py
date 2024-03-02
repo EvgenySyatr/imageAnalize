@@ -55,7 +55,8 @@ def create_analyzers(input_folder):
         points_file = f"points{i}.txt"  # Генерируем имя файла для сохранения точек
         analyzer = ba.PixelBrightnessAnalyzer(input_folder, image_name + ".bmp", points_file, "Output")
         print(f"Создан объект PixelBrightnessAnalyzer для {bmp_filename}")
-        output_list.append(analyzer.track_max_dispersion_points(20, 50))
+        output_list.append(analyzer.track_max_dispersion_points(20, 4))
+    # В зависимости от количества входных файлов меняется количество элементов кортежа output_list
     return output_list
 
 
@@ -78,7 +79,7 @@ def write_tuple_F3_data_to_file(tuple_data, filename):
     """
     tuple_data = tuple_data
     # Открываем файл для записи
-    with open(filename, "w") as file:
+    with open(filename, "a") as file:
         # Распаковываем кортеж
         points = tuple_data[0]
         brightness_list = tuple_data[1]
@@ -103,7 +104,7 @@ def write_tuple_F5_data_to_file(tuple_data, filename):
     """
     tuple_data = tuple_data
     # Открываем файл для записи
-    with open(filename, "w") as file:
+    with open(filename, "a") as file:
         # Распаковываем кортеж
         points = tuple_data[0]
         brightness_list = tuple_data[3]
@@ -116,25 +117,87 @@ def write_tuple_F5_data_to_file(tuple_data, filename):
             file.write(f"{point[0]} {point[1]} {brightness} {dispersion}\n")
 
 
+def clear_files(*filenames):
+    """
+    Очищает содержимое указанных файлов.
 
-input_folder = "Input"
+    Аргументы:
+    - filenames (строки): Имена файлов для очистки.
 
-all_lab_points = create_analyzers(input_folder)
-
-tuple_data = all_lab_points[0]  # Получаем кортеж из output_list
-write_tuple_F3_data_to_file(tuple_data, "outputF3.txt")  # Передаем кортеж в функцию write_tuple_data_to_file
-
-write_tuple_F5_data_to_file(tuple_data, "outputF5.txt")  # Передаем кортеж в функцию write_tuple_data_to_file
-
-
-
-
-
-# Создаем объект
-#analyzer = ba.PixelBrightnessAnalyzer(input_folder)
-#points_for_lab = analyzer.track_max_dispersion_points(20)
-#print("Вывод точек")
-#for i in range(0, len(points_for_lab[0])):
- #   print(f"{points_for_lab[0][i]} {points_for_lab[1][i]} {points_for_lab[2][i]}")
+    Возвращает:
+    None
+    """
+    for filename in filenames:
+        with open(filename, "w") as file:
+            file.truncate(0)
 
 
+# input_folder = "Input"
+
+# all_lab_points = create_analyzers(input_folder)
+
+# tuple_data = all_lab_points[0]  # Получаем кортеж из output_list
+# write_tuple_F3_data_to_file(tuple_data, "outputF3.txt")  # Передаем кортеж в функцию write_tuple_data_to_file
+
+# write_tuple_F5_data_to_file(tuple_data, "outputF5.txt")  # Передаем кортеж в функцию write_tuple_data_to_file
+
+def clear_console():
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+def main_menu():
+    input("Нажмите Enter для продолжения\n")
+    clear_console()
+    print("Меню:")
+    print("1. Обрезать изображения")
+    print("2. Преобразовать изображения в черно-белый формат")
+    print("3. Отформатировать названия изображений")
+    print("4. Выполнить анализ яркости изображений")
+    print("5. Выход")
+
+    choice = input("Введите номер действия: ")
+
+    if choice == "1":
+        cropper = ic.ImageCropper()
+        cropper.crop_images()
+        cropper.rename_output_images("Image")
+    elif choice == "2":
+        bw = bwc.BlackAndWhiteConverter()
+        bw.convert_to_black_and_white()
+    elif choice == "3":
+        cropper = ic.ImageCropper()
+        cropper.rename_output_images("Image")
+    elif choice == "4":
+        analyze_brightness_menu()
+    elif choice == "5":
+        print("До свидания!")
+        exit()
+    else:
+        print("Некорректный выбор. Пожалуйста, выберите действие из списка.")
+
+def analyze_brightness_menu():
+    print("Выберите опцию для анализа яркости изображений:")
+    print("1. Найти точки, сделать анализ дисперсии и яркости по F3 и F5")
+    print("2. Очистить выходные файлы F3 F5")
+    print("3. Вернуться в главное меню")
+
+    choice = input("Введите номер действия: ")
+
+    if choice == "1":
+        input_folder = "Input"
+        all_lab_points = create_analyzers(input_folder)
+        for i in range(len(all_lab_points)):
+            tuple_data = all_lab_points[i]  # Получаем кортеж из output_list
+            write_tuple_F3_data_to_file(tuple_data, "outputF3.txt")  # Передаем кортеж в функцию write_tuple_data_to_file
+            write_tuple_F5_data_to_file(tuple_data, "outputF5.txt")  # Передаем кортеж в функцию write_tuple_data_to_file
+    elif choice == "2":
+        clear_files("outputF3.txt", "outputF5.txt")
+        pass
+    elif choice == "3":
+        return
+    else:
+        print("Некорректный выбор. Пожалуйста, выберите действие из списка.")
+
+
+# Основной цикл программы
+while True:
+    main_menu()
