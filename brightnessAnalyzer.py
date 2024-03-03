@@ -2,6 +2,7 @@ from PIL import Image
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 
 class PixelBrightnessAnalyzer:
@@ -34,6 +35,17 @@ class PixelBrightnessAnalyzer:
         return points
 
     def get_pixel_brightness(self, x, y, image_name):
+        """
+        Получает яркость пикселя изображения по его координатам.
+
+        Аргументы:
+        - x (int): Координата x пикселя.
+        - y (int): Координата y пикселя.
+        - image_name (str): Имя изображения.
+
+        Возвращает:
+        - brightness (int): Яркость пикселя (значение от 0 до 255).
+        """
         img_path = os.path.join(self.input_folder, image_name)
         img = Image.open(img_path)
         pixel = img.getpixel((x, y))
@@ -232,9 +244,9 @@ class PixelBrightnessAnalyzer:
 
         return brightList, dispList
 
-    def get_background_dispersion(self):
+    def get_background_dispersion(self, border_width = 80):
         """
-        Находит максимальную дисперсию для точек фона в области шириной 10 пикселей вверху изображения.
+        Находит максимальную дисперсию для точек фона в области шириной 10 пикселей сверху изображения.
 
         Возвращает:
         float: Максимальная дисперсия для точек фона.
@@ -242,16 +254,12 @@ class PixelBrightnessAnalyzer:
         # Определяем размеры изображения
         width, height = self.image.size
 
-        # Ширина области по краю, которую мы исследуем (например, 10 пикселей)
-        border_width = 10
-
-        # Создаем список для хранения дисперсий фона
         background_dispersion_list = []
 
         # Проходим по области верхнего края изображения
-        for x in range(border_width, width - border_width):
+        for x in tqdm(range(0, width - 1), desc="Processing rows"):
             for y in range(border_width):
-                print(f"[ {x}; {y} ]")
+                # print(f"[ {x}; {y} ]")
                 # Для каждой точки в области верхнего края получаем яркость окружающих пикселей
                 surrounding_brightness = self.get_surrounding_pixel_brightness(x, y, self.image_name)
 
@@ -263,10 +271,10 @@ class PixelBrightnessAnalyzer:
 
         # Находим максимальную дисперсию
         max_dispersion = max(background_dispersion_list)
-
+        # self.visualize_explored_area(border_width)
         return max_dispersion
 
-    def visualize_explored_area(self):
+    def visualize_explored_area(self, border_width = 10):
         """
         Визуализирует область, которая была исследована для поиска максимальной дисперсии.
 
@@ -278,9 +286,6 @@ class PixelBrightnessAnalyzer:
 
         # Определяем размеры изображения
         width, height = self.image.size
-
-        # Ширина области по краю, которую мы исследуем (например, 10 пикселей)
-        border_width = 10
 
         # Проходим по области верхнего края изображения
         for x in range(border_width, width - border_width):
@@ -294,9 +299,9 @@ class PixelBrightnessAnalyzer:
         plt.axis('off')
         plt.show()
 
-    def save_explored_area(self, output_file):
+    def save_explored_area(self, border_width=10, output_file="BackgroungArea.jpg"):
         """
-        Сохраняет исследованную область в новом файле .bmp с сохранением яркости и цвета каждого пикселя.
+        Сохраняет исследованную область в новом файле с сохранением яркости и цвета каждого пикселя.
 
         Аргументы:
         output_file (str): Имя выходного файла.
@@ -311,10 +316,10 @@ class PixelBrightnessAnalyzer:
         width, height = self.image.size
 
         # Ширина области по краю, которую мы исследуем (например, 10 пикселей)
-        border_width = 10
+
 
         # Проходим по области верхнего края изображения
-        for x in range(border_width, width - border_width):
+        for x in range(0, width):
             for y in range(border_width):
                 # Получаем яркость и цвет пикселя из оригинального изображения
                 brightness = self.get_pixel_brightness(x, y, self.image_name)
@@ -322,19 +327,26 @@ class PixelBrightnessAnalyzer:
                 # Устанавливаем яркость и цвет пикселя в исследованной области
                 explored_area.putpixel((x, y), color)
 
-        # Сохраняем изображение в файле .bmp
+        # Сохраняем изображение
         explored_area.save(output_file)
+        with Image.open(output_file) as img:
+            # Показываем изображение в консоли
+            img.show()
 
     def track_max_dispersion_points(self, dispersion_background, step_size=6):
         """
         Отслеживает максимальные точки дисперсии на изображении.
 
         Аргументы:
-        dispersion_background (float): Значение дисперсии фона.
-        step_size (int): Размер шага при перемещении по вертикали.
+        - dispersion_background (float): Значение дисперсии фона.
+        - step_size (int): Размер шага при перемещении по вертикали.
 
         Возвращает:
-        list: Список точек с максимальной дисперсией.
+        - max_dispersion_points (list): Список точек с максимальной дисперсией.
+        - brightness_list (list): Список яркостей пикселей для каждой найденной точки.
+        - dispersion_list (list): Список дисперсий для каждой найденной точки.
+        - brightness_list_5x5 (list): Список яркостей пикселей (для 5x5 окрестности) для каждой найденной точки.
+        - dispersion_list_5x5 (list): Список дисперсий (для 5x5 окрестности) для каждой найденной точки.
         """
         step_size = step_size
         max_dispersion_points = []  # Список для хранения точек с максимальной дисперсией
@@ -350,12 +362,12 @@ class PixelBrightnessAnalyzer:
         height = 238
         border = 40
         # Проходим по каждой вертикальной полосе изображения
-        for y in range(border, height - border, step_size):
+        for y in tqdm(range(border, height - border, step_size), desc="Processing rows from left to right"):
             max_dispersion = 0  # Максимальная дисперсия в текущей полосе
             max_dispersion_point = None  # Точка с максимальной дисперсией в текущей полосе
 
             # Начинаем с верхней части изображения и двигаемся вниз с шагом step_size
-            for x in range(width):
+            for x in range(border, width):
                 # Проверяем, находятся ли координаты в пределах изображения
                 if 0 <= x < width and 0 <= y < height:
                     # Получаем яркость окружающих пикселей для текущей точки
@@ -390,8 +402,8 @@ class PixelBrightnessAnalyzer:
                 dispersion_list.append(dispersion)
                 dispersion_5x5 = self.dispersion_by_brightness_list(surrounding_brightness_5x5)
                 dispersion_list_5x5.append(dispersion_5x5)
-                print(f"[ {pointX};{pointY} ] {self.analyze_pixel_and_surroundings(pointX, pointY, self.image_name)} {dispersion} "
-                      f"| F5 | {self.analyze_pixel_and_surroundings_25(pointX, pointY, self.image_name)} {dispersion_5x5}")  # Выводим координаты точки
+                # print(f"[ {pointX};{pointY} ] {self.analyze_pixel_and_surroundings(pointX, pointY, self.image_name)} {dispersion} "
+                #       f"| F5 | {self.analyze_pixel_and_surroundings_25(pointX, pointY, self.image_name)} {dispersion_5x5}")  # Выводим координаты точки
 
         right_side_cort = self.track_max_dispersion_points_From_Right_To_Left(dispersion_background, step_size)
         max_dispersion_points += right_side_cort[0]
@@ -402,9 +414,24 @@ class PixelBrightnessAnalyzer:
 
         # записываем в выходной файл координаты точек
         self.write_coordinates_to_file(max_dispersion_points)
+        clear_console()
         return max_dispersion_points, brightness_list, dispersion_list, brightness_list_5x5, dispersion_list_5x5
 
     def track_max_dispersion_points_From_Right_To_Left(self, dispersion_background, step_size=6):
+        """
+        Отслеживает максимальные точки дисперсии на изображении, двигаясь справа налево.
+
+        Аргументы:
+        - dispersion_background (float): Значение дисперсии фона.
+        - step_size (int): Размер шага при перемещении по вертикали.
+
+        Возвращает:
+        - max_dispersion_points (list): Список точек с максимальной дисперсией.
+        - brightness_list (list): Список яркостей пикселей для каждой найденной точки.
+        - dispersion_list (list): Список дисперсий для каждой найденной точки.
+        - brightness_list_5x5 (list): Список яркостей пикселей (для 5x5 окрестности) для каждой найденной точки.
+        - dispersion_list_5x5 (list): Список дисперсий (для 5x5 окрестности) для каждой найденной точки.
+        """
         max_dispersion_points = []
         brightness_list = []
         dispersion_list = []
@@ -415,12 +442,12 @@ class PixelBrightnessAnalyzer:
         height = 238
         border = 40
         # Проходим по каждой вертикальной полосе изображения
-        for y in range(border, border - 10, step_size):
+        for y in tqdm(range(border, height - border, step_size), desc="Processing rows from right to left"):
             max_dispersion = 0  # Максимальная дисперсия в текущей полосе
             max_dispersion_point = None  # Точка с максимальной дисперсией в текущей полосе
 
             # Начинаем с верхней части изображения и двигаемся вниз с шагом step_size
-            for x in range(359, 180, -1):
+            for x in range(359 - border, 180, -1):
                 # Проверяем, находятся ли координаты в пределах изображения
                 if 180 <= x < 358 and 0 <= y < height:
                     # Получаем яркость окружающих пикселей для текущей точки
@@ -456,9 +483,9 @@ class PixelBrightnessAnalyzer:
                 dispersion_list.append(dispersion)
                 dispersion_5x5 = self.dispersion_by_brightness_list(surrounding_brightness_5x5)
                 dispersion_list_5x5.append(dispersion_5x5)
-                print(
-                    f"[ {pointX};{pointY} ] {self.analyze_pixel_and_surroundings(pointX, pointY, self.image_name)} {dispersion} "
-                    f"| F5 | {self.analyze_pixel_and_surroundings_25(pointX, pointY, self.image_name)} {dispersion_5x5}")  # Выводим координаты точки
+                # print(
+                #     f"[ {pointX};{pointY} ] {self.analyze_pixel_and_surroundings(pointX, pointY, self.image_name)} {dispersion} "
+                #     f"| F5 | {self.analyze_pixel_and_surroundings_25(pointX, pointY, self.image_name)} {dispersion_5x5}")  # Выводим координаты точки
 
         return max_dispersion_points, brightness_list, dispersion_list, brightness_list_5x5, dispersion_list_5x5
 
@@ -521,3 +548,11 @@ class PixelBrightnessAnalyzer:
                 x_str = str(coord[0]).zfill(4)  # Добавляем нули спереди до 4 цифр
                 y_str = str(coord[1]).zfill(4)  # Добавляем нули спереди до 4 цифр
                 file.write(f"{x_str} {y_str}\n")
+
+
+
+def clear_console():
+    """
+    Очищает консольный вывод в зависимости от операционной системы.
+    """
+    os.system('cls' if os.name == 'nt' else 'clear')

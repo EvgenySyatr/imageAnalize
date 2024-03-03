@@ -2,6 +2,9 @@ import imageCropper as ic
 import blackWhiteConverter as bwc
 import brightnessAnalyzer as ba
 import os
+import re
+from PIL import Image
+from tqdm import tqdm
 
 
 def get_bmp_filenames(input_folder):
@@ -64,7 +67,8 @@ def create_analyzers(input_folder):
 
     start_index = get_start_index()
 
-    for i in range(start_index + 1, len(bmp_filenames)):
+    # for i in range(start_index + 1, len(bmp_filenames)):
+    for i in tqdm(range(start_index + 1, len(bmp_filenames) + 1), desc="Progress of Analise of Image"):
         bmp_filename = bmp_filenames[i - 1]
         image_name = os.path.splitext(bmp_filename)[0]  # Получаем имя файла без расширения
         points_file = f"points{i}.txt"  # Генерируем имя файла для сохранения точек
@@ -92,7 +96,13 @@ def create_analyzers_from_points_files(output_folder):
 
     # Фильтруем только файлы pointsN.txt
     points_files = [file for file in files if file.startswith("points") and file.endswith(".txt")]
+    print(points_files)
+    input()
+    # Сортируем файлы по числовому значению в имени
+    points_files.sort(key=lambda x: int(re.search(r'\d+', x).group()))
 
+    print(points_files)
+    input()
     # Создаем объекты PixelBrightnessAnalyzer для каждого файла pointsN.txt
     for points_file in points_files:
         # Извлекаем номер из имени файла
@@ -221,7 +231,8 @@ def analyze_brightness_menu():
     print("1. Составить points файлы для входных изображений")
     print("2. Очистить выходные файлы F3 F5")
     print("3. Заполнить F3 F5 файлы")
-    print("4. Вернуться в главное меню")
+    print("4. Найти максимальную дисперсию фона")
+    print("5. Вернуться в главное меню")
 
     choice = input("Введите номер действия: ")
 
@@ -243,6 +254,13 @@ def analyze_brightness_menu():
             write_tuple_F3_data_to_file(tuple, "outputF3.txt")
             write_tuple_F5_data_to_file(tuple, "outputF5.txt")
     elif choice == "4":
+        # image_for_analize = "Image1.bmp"
+        border_width = int(input("Введите ширину исследуемой сверху области\n     "))
+        analyze = ba.PixelBrightnessAnalyzer("Input")
+        analyze.save_explored_area(border_width)
+        print(f"Максимальная дисперсия фона : {analyze.get_background_dispersion(border_width)}")
+        input()
+    elif choice == "5":
         return
     else:
         print("Некорректный выбор. Пожалуйста, выберите действие из списка.")
@@ -251,3 +269,4 @@ def analyze_brightness_menu():
 # Основной цикл программы
 while True:
     main_menu()
+
