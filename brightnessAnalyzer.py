@@ -346,10 +346,11 @@ class PixelBrightnessAnalyzer:
         dispersion_list_5x5 = []
 
         # Определяем размеры изображения
-        width = 179
-        height = 239
+        width = 178
+        height = 238
+        border = 40
         # Проходим по каждой вертикальной полосе изображения
-        for y in range(0, height, step_size):
+        for y in range(border, height - border, step_size):
             max_dispersion = 0  # Максимальная дисперсия в текущей полосе
             max_dispersion_point = None  # Точка с максимальной дисперсией в текущей полосе
 
@@ -410,17 +411,18 @@ class PixelBrightnessAnalyzer:
         brightness_list_5x5 = []
         dispersion_list_5x5 = []
         # Определяем размеры изображения
-        width = 179
-        height = 239
+        width = 178
+        height = 238
+        border = 40
         # Проходим по каждой вертикальной полосе изображения
-        for y in range(0, height, step_size):
+        for y in range(border, border - 10, step_size):
             max_dispersion = 0  # Максимальная дисперсия в текущей полосе
             max_dispersion_point = None  # Точка с максимальной дисперсией в текущей полосе
 
             # Начинаем с верхней части изображения и двигаемся вниз с шагом step_size
             for x in range(359, 180, -1):
                 # Проверяем, находятся ли координаты в пределах изображения
-                if 180 <= x < 359 and 0 <= y < height:
+                if 180 <= x < 358 and 0 <= y < height:
                     # Получаем яркость окружающих пикселей для текущей точки
                     surrounding_brightness = self.get_surrounding_pixel_brightness(x, y, self.image_name)
 

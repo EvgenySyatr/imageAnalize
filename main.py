@@ -64,7 +64,7 @@ def create_analyzers(input_folder):
 
     start_index = get_start_index()
 
-    for i in range(start_index + 1, len(bmp_filenames) + 1):
+    for i in range(start_index + 1, len(bmp_filenames)):
         bmp_filename = bmp_filenames[i - 1]
         image_name = os.path.splitext(bmp_filename)[0]  # Получаем имя файла без расширения
         points_file = f"points{i}.txt"  # Генерируем имя файла для сохранения точек
