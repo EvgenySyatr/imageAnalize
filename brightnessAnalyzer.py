@@ -333,7 +333,7 @@ class PixelBrightnessAnalyzer:
             # Показываем изображение в консоли
             img.show()
 
-    def track_max_dispersion_points(self, dispersion_background, step_size=6):
+    def track_max_dispersion_points(self, dispersion_background, step_size=6, border_width=40):
         """
         Отслеживает максимальные точки дисперсии на изображении.
 
@@ -360,7 +360,7 @@ class PixelBrightnessAnalyzer:
         # Определяем размеры изображения
         width = 178
         height = 238
-        border = 40
+        border = border_width
         # Проходим по каждой вертикальной полосе изображения
         for y in tqdm(range(border, height - border, step_size), desc="Processing rows from left to right"):
             max_dispersion = 0  # Максимальная дисперсия в текущей полосе

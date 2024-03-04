@@ -44,6 +44,38 @@ class ImageCropper:
                 output_path = os.path.join(self.output_folder, os.path.splitext(file)[0] + ".bmp")
                 cropped_img.save(output_path)
                 print(f"Изображение {file} успешно обрезано и сохранено в {self.output_folder}")
+            elif file.endswith(".jpg"):
+                img_path = os.path.join(self.input_folder, file)
+                img = Image.open(img_path)
+
+                width, height = img.size
+                left = (width - 360) // 2
+                top = (height - 240) // 2
+                right = left + 360
+                bottom = top + 240
+
+                cropped_img = img.crop((left, top, right, bottom))
+
+                # Сохраняем изображение в формате BMP
+                output_path = os.path.join(self.output_folder, os.path.splitext(file)[0] + ".bmp")
+                cropped_img.save(output_path)
+                print(f"Изображение {file} успешно обрезано и сохранено в {self.output_folder}")
+            elif file.endswith(".bmp"):
+                img_path = os.path.join(self.input_folder, file)
+                img = Image.open(img_path)
+
+                width, height = img.size
+                left = (width - 360) // 2
+                top = (height - 240) // 2
+                right = left + 360
+                bottom = top + 240
+
+                cropped_img = img.crop((left, top, right, bottom))
+
+                # Сохраняем изображение в формате BMP
+                output_path = os.path.join(self.output_folder, os.path.splitext(file)[0] + ".bmp")
+                cropped_img.save(output_path)
+                print(f"Изображение {file} успешно обрезано и сохранено в {self.output_folder}")
 
     def rename_output_images(self, name_of_image_for_out):
         """

@@ -3,6 +3,7 @@ import blackWhiteConverter as bwc
 import brightnessAnalyzer as ba
 import os
 import re
+# import exelTable as ex
 from PIL import Image
 from tqdm import tqdm
 
@@ -54,19 +55,23 @@ def get_start_index():
     return start_index
 
 
-def create_analyzers(input_folder):
+def create_analyzers(input_folder, background_dispersion=20, step_size=4):
     """
     Создает объекты PixelBrightnessAnalyzer для каждого файла BMP в каталоге Input.
     Если для какого то из объектов уже есть выходной файл, тогда начинаем со следующего
     Параметры:
     - input_folder (строка): Путь к каталогу с входными изображениями.
     """
+    input_disp= input("Введите максимальную дисперсию фона\n     ")
+    if(input_disp):
+        background_dispersion = int(input_disp)
+
     output_list = []
     bmp_filenames = get_bmp_filenames(input_folder)
     bmp_filenames = sorted(bmp_filenames, key=extract_number)  # Сортировка имен файлов
 
     start_index = get_start_index()
-
+    border_input = input("Введите ширину области, которая не будет исследована\n     ")
     # for i in range(start_index + 1, len(bmp_filenames)):
     for i in tqdm(range(start_index + 1, len(bmp_filenames) + 1), desc="Progress of Analise of Image"):
         bmp_filename = bmp_filenames[i - 1]
@@ -74,7 +79,11 @@ def create_analyzers(input_folder):
         points_file = f"points{i}.txt"  # Генерируем имя файла для сохранения точек
         analyzer = ba.PixelBrightnessAnalyzer(input_folder, image_name + ".bmp", points_file, "Output")
         print(f"Создан объект PixelBrightnessAnalyzer для {bmp_filename}")
-        output_list.append(analyzer.track_max_dispersion_points(20, 4))
+        if(border_input):
+            border_width = int(border_input)
+        else:
+            border_width = 40
+        output_list.append(analyzer.track_max_dispersion_points(background_dispersion, step_size, border_width))
     # В зависимости от количества входных файлов меняется количество элементов кортежа output_list
     return output_list
 
@@ -96,13 +105,13 @@ def create_analyzers_from_points_files(output_folder):
 
     # Фильтруем только файлы pointsN.txt
     points_files = [file for file in files if file.startswith("points") and file.endswith(".txt")]
-    print(points_files)
-    input()
+    # print(points_files)
+    # input()
     # Сортируем файлы по числовому значению в имени
     points_files.sort(key=lambda x: int(re.search(r'\d+', x).group()))
 
-    print(points_files)
-    input()
+    # print(points_files)
+    # input()
     # Создаем объекты PixelBrightnessAnalyzer для каждого файла pointsN.txt
     for points_file in points_files:
         # Извлекаем номер из имени файла
@@ -258,6 +267,9 @@ def analyze_brightness_menu():
         border_width = int(input("Введите ширину исследуемой сверху области\n     "))
         analyze = ba.PixelBrightnessAnalyzer("Input")
         analyze.save_explored_area(border_width)
+        continue_input = input("Enter чтобы продолжить, любой ввод чтобы вернуться в меню\n")
+        if (continue_input):
+            return
         print(f"Максимальная дисперсия фона : {analyze.get_background_dispersion(border_width)}")
         input()
     elif choice == "5":
@@ -270,3 +282,9 @@ def analyze_brightness_menu():
 while True:
     main_menu()
 
+# Пример использования
+# input_file = 'outputF3.txt'
+# output_file = 'output.xlsx'
+
+# excel_table = ex.ExcelTable(input_file, output_file)
+# excel_table.create_exel_file()
