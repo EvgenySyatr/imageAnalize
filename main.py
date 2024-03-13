@@ -105,13 +105,10 @@ def create_analyzers_from_points_files(output_folder):
 
     # Фильтруем только файлы pointsN.txt
     points_files = [file for file in files if file.startswith("points") and file.endswith(".txt")]
-    # print(points_files)
-    # input()
+
     # Сортируем файлы по числовому значению в имени
     points_files.sort(key=lambda x: int(re.search(r'\d+', x).group()))
 
-    # print(points_files)
-    # input()
     # Создаем объекты PixelBrightnessAnalyzer для каждого файла pointsN.txt
     for points_file in points_files:
         # Извлекаем номер из имени файла
@@ -213,7 +210,8 @@ def main_menu():
     print("2. Преобразовать изображения в черно-белый формат")
     print("3. Отформатировать названия изображений")
     print("4. Выполнить анализ яркости изображений")
-    print("5. Выход")
+    print("5. Импортировать Points из txt в exel")
+    print("0. Выход")
 
     choice = input("Введите номер действия: ")
 
@@ -229,7 +227,7 @@ def main_menu():
         cropper.rename_output_images("Image")
     elif choice == "4":
         analyze_brightness_menu()
-    elif choice == "5":
+    elif choice == "0":
         print("До свидания!")
         exit()
     else:
@@ -241,7 +239,7 @@ def analyze_brightness_menu():
     print("2. Очистить выходные файлы F3 F5")
     print("3. Заполнить F3 F5 файлы")
     print("4. Найти максимальную дисперсию фона")
-    print("5. Вернуться в главное меню")
+    print("0. Вернуться в главное меню")
 
     choice = input("Введите номер действия: ")
 
@@ -272,19 +270,24 @@ def analyze_brightness_menu():
             return
         print(f"Максимальная дисперсия фона : {analyze.get_background_dispersion(border_width)}")
         input()
-    elif choice == "5":
+    elif choice == "0":
         return
     else:
         print("Некорректный выбор. Пожалуйста, выберите действие из списка.")
 
+###################################################
 
-# Основной цикл программы
-while True:
-    main_menu()
+# # Основной цикл программы
+# while True:
+#     main_menu()
 
-# Пример использования
-# input_file = 'outputF3.txt'
-# output_file = 'output.xlsx'
+###########################################################################
+input_folder = "Input"
+output_folder = "Output"
+image_name = "Image1.bmp"
+points_file = "points1.txt"
+# Генерируем имя файла для сохранения точек
+points_file_path = os.path.join(output_folder, points_file)
+ # Создаем объект PixelBrightnessAnalyzer
+analyzer = ba.PixelBrightnessAnalyzer(input_folder, image_name, points_file_path, output_folder)
 
-# excel_table = ex.ExcelTable(input_file, output_file)
-# excel_table.create_exel_file()
