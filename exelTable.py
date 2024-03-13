@@ -53,7 +53,3 @@ class ExcelTable:
 
 
 
-exel = ExcelTable("outputF3.txt", "example.xlsx")
-exel.workbook_init()
-exel.fill_column()  # Заполнение столбца
-

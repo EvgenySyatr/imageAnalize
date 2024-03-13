@@ -129,7 +129,7 @@ class ExcelHandler:
 
 
 # Пример использования:
-excel_handler = ExcelHandler("example.xlsx")
-data = ["Value1", "Value2", "Value3", "Value4", "Value5"]
-excel_handler.fill_column(data, 2, start_row=2, end_row=4)
+# excel_handler = ExcelHandler("example.xlsx")
+# data = ["Value1", "Value2", "Value3", "Value4", "Value5"]
+# excel_handler.fill_column(data, 2, start_row=2, end_row=4)
 

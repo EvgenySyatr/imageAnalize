@@ -5,6 +5,7 @@ import os
 import re
 # import exelTable as ex
 from PIL import Image
+from ExcelHandler import ExcelHandler
 from tqdm import tqdm
 
 
@@ -227,6 +228,8 @@ def main_menu():
         cropper.rename_output_images("Image")
     elif choice == "4":
         analyze_brightness_menu()
+    elif choice == "5":
+        final_EXPORT_DATAF3F5_TO_EXEL()
     elif choice == "0":
         print("До свидания!")
         exit()
@@ -275,19 +278,66 @@ def analyze_brightness_menu():
     else:
         print("Некорректный выбор. Пожалуйста, выберите действие из списка.")
 
+def read_data_from_file(filename):
+    """
+    Считывает данные из файла и возвращает список кортежей значений.
+
+    Аргументы:
+    - filename (str): Имя файла для чтения.
+
+    Возвращает:
+    - data (list): Список кортежей значений.
+    """
+    data = []
+    with open(filename, "r") as file:
+        for line in file:
+            # Разбиваем строку по пробелам и преобразуем значения в нужный формат
+            values = line.strip().split()
+            point = (float(values[0]), float(values[1]))
+            brightness = float(values[2])
+            dispersion = float(values[3])
+            data.append((point, brightness, dispersion))
+    return data
+
+def final_EXPORT_DATAF3F5_TO_EXEL(exel_file="CopyOfWorkTable.xlsx"):
+    """
+    Заполняет таблицу значениями из outputF3.txt и outputF5.txt
+    :param exel_file:
+    :return:
+    """
+    input_folder = "Input"
+    output_folder = "Output"
+    image_name = "Image1.bmp"
+    points_file = "points1.txt"
+    # Генерируем имя файла для сохранения точек
+    points_file_path = os.path.join(output_folder, points_file)
+    # Создаем объект PixelBrightnessAnalyzer
+    analyzer = ba.PixelBrightnessAnalyzer(input_folder, image_name, points_file_path, output_folder)
+
+    data = read_data_from_file("outputF3.txt")
+    ex = ExcelHandler(exel_file)
+    # X
+    list_input = [data[i][0][0] for i in range(len(data))]  # Берем значения из первой координаты точки
+    ex.fill_column(list_input, 1, 4, 983)
+    # Y
+    list_input = [data[i][0][1] for i in range(len(data))]  # Берем значения из первой координаты точки
+    ex.fill_column(list_input, 2, 4, 983)
+    # M3
+    list_input = [int(data[i][1]) for i in range(len(data))]  # Берем значения из первой координаты точки
+    ex.fill_column(list_input, 3, 4, 983)
+    # D3
+    list_input = [int(data[i][2]) for i in range(len(data))]  # Берем значения из первой координаты точки
+    ex.fill_column(list_input, 4, 4, 983)
+    data_addition = read_data_from_file("outputF5.txt")
+    # M5
+    list_input = [int(data_addition[i][1]) for i in range(len(data))]  # Берем значения из первой координаты точки
+    ex.fill_column(list_input, 5, 4, 983)
+    # D5
+    list_input = [int(data_addition[i][2]) for i in range(len(data))]  # Берем значения из первой координаты точки
+    ex.fill_column(list_input, 6, 4, 983)
 ###################################################
 
-# # Основной цикл программы
-# while True:
-#     main_menu()
-
-###########################################################################
-input_folder = "Input"
-output_folder = "Output"
-image_name = "Image1.bmp"
-points_file = "points1.txt"
-# Генерируем имя файла для сохранения точек
-points_file_path = os.path.join(output_folder, points_file)
- # Создаем объект PixelBrightnessAnalyzer
-analyzer = ba.PixelBrightnessAnalyzer(input_folder, image_name, points_file_path, output_folder)
+# Основной цикл программы
+while True:
+    main_menu()
 
