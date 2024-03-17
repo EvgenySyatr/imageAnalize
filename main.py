@@ -56,12 +56,13 @@ def get_start_index():
     return start_index
 
 
-def create_analyzers(input_folder, background_dispersion=20, step_size=4):
+def create_analyzers(input_folder, background_dispersion=20, step_size=2):
     """
     Создает объекты PixelBrightnessAnalyzer для каждого файла BMP в каталоге Input.
     Если для какого то из объектов уже есть выходной файл, тогда начинаем со следующего
     Параметры:
     - input_folder (строка): Путь к каталогу с входными изображениями.
+    step_size - по вертикали расстояние между точками
     """
     input_disp= input("Введите максимальную дисперсию фона\n     ")
     if(input_disp):
