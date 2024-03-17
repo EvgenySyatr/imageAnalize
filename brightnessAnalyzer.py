@@ -1,38 +1,17 @@
 from PIL import Image
 import os
-import numpy as np
-import matplotlib.pyplot as plt
+import random
 from tqdm import tqdm
+from work_with_files import workWithFiles
 
 
-class PixelBrightnessAnalyzer:
+class PixelBrightnessAnalyzer(workWithFiles):
     def __init__(self, input_folder, image_name="Image1.bmp", points_file="points1.txt", output_folder="Output"):
         self.points_file = points_file
         self.image_name = image_name
         self.input_folder = input_folder
         self.image = Image.open(os.path.join(input_folder, image_name))
         self.output_folder = output_folder
-
-    def get_points_from_points_file(self):
-        """
-        Получает список точек из файла pointsN.txt.
-
-        Возвращает:
-        - points (list): Список координат точек.
-        """
-        points = []
-        file_path = self.points_file
-        # Открываем файл pointsN.txt
-        with open(file_path, "r") as file:
-            # Читаем строки из файла
-            lines = file.readlines()
-            # Начиная со второй строки, обрабатываем каждую строку
-            for line in lines[1:]:
-                # Разбиваем строку на координаты x и y
-                x, y = map(int, line.strip().split())
-                points.append((x, y))
-
-        return points
 
     def get_pixel_brightness(self, x, y, image_name):
         """
@@ -171,32 +150,6 @@ class PixelBrightnessAnalyzer:
 
         return dispersion
 
-    def get_points_from_file(self, file_name):
-        """
-        Получает координаты точек из текстового файла.
-
-        Аргументы:
-        file_name (str): Имя текстового файла с координатами точек.
-
-        Возвращает:
-        list: Список точек в формате (x, y).
-        """
-        points = []
-
-        # Полный путь к текстовому файлу
-        file_path = os.path.join(self.input_folder, file_name)
-
-        # Чтение координат из файла
-        with open(file_path, 'r') as file:
-            for line in file:
-                # Разделение строки на координаты x и y
-                coordinates = list(map(int, line.split()))
-                x, y = coordinates if len(coordinates) == 2 else (
-                coordinates[0], 0)  # Если только одна координата, то y=0
-                points.append((x, y))
-
-        return points
-
     def analyze_point(self, x, y, image_name):
         """
         Анализирует яркость и дисперсию для заданной точки.
@@ -273,31 +226,6 @@ class PixelBrightnessAnalyzer:
         max_dispersion = max(background_dispersion_list)
         # self.visualize_explored_area(border_width)
         return max_dispersion
-
-    def visualize_explored_area(self, border_width = 10):
-        """
-        Визуализирует область, которая была исследована для поиска максимальной дисперсии.
-
-        Возвращает:
-        None
-        """
-        # Создаем изображение для визуализации
-        explored_area = np.zeros_like(self.image)
-
-        # Определяем размеры изображения
-        width, height = self.image.size
-
-        # Проходим по области верхнего края изображения
-        for x in range(border_width, width - border_width):
-            for y in range(border_width):
-                # Метим точку на изображении как исследованную
-                explored_area[y, x] = 255  # Белый цвет
-
-        # Визуализируем исследованную область
-        plt.imshow(explored_area, cmap='gray')
-        plt.title('Explored Area')
-        plt.axis('off')
-        plt.show()
 
     def save_explored_area(self, border_width=10, output_file="BackgroungArea.jpg"):
         """
@@ -613,8 +541,30 @@ class PixelBrightnessAnalyzer:
                         dispersion_list_5x5.append(dispersion_5x5)
                         break
 
-        # self.write_coordinates_to_file(max_dispersion_points) # Убрать потом
         return max_dispersion_points, brightness_list, dispersion_list, brightness_list_5x5, dispersion_list_5x5
+
+    def select_random_points_and_save(self, height, width):
+        """
+        Выбирает случайные точки из левой полоски изображения и записывает их в файл точек.
+
+        Параметры:
+        - height (int): Высота изображения.
+        - width (int): Ширина изображения по оси x.
+        """
+        # Определение размера полоски
+        strip_width = width  # Ширина полоски
+
+        # Определение количества точек для выбора (пусть будет 100)
+        num_points = 100
+
+        # Генерация случайных координат x и y для точек
+        random_x = [random.randint(0, strip_width) for _ in range(num_points)]
+        random_y = [random.randint(0, height - 1) for _ in range(num_points)]
+
+        point_list =[]
+        for i in range(100):
+            point_list.append((random_x[i], random_y[i]))
+        self.write_coordinates_to_file(point_list)
 
     def fill_lists(self, point_list):
         """
@@ -651,32 +601,6 @@ class PixelBrightnessAnalyzer:
             dispersion_list_5x5.append(dispersion_5x5)
 
         return point_list, brightness_list, dispersion_list, brightness_list_5x5, dispersion_list_5x5
-
-    def write_coordinates_to_file(self, coordinates):
-        """
-        Записывает координаты точек в файл.
-
-        Аргументы:
-        coordinates (list): Список координат точек.
-
-        Возвращает:
-        None
-        """
-        total_points = len(coordinates)
-        file_path = os.path.join(self.output_folder, self.points_file)
-        file_path = os.path.join(os.getcwd(), file_path)
-        # Создаем папку Output, если ее еще нет
-        os.makedirs(os.path.join(os.getcwd(), self.output_folder), exist_ok=True)
-
-        print(f"Данные запишем в файл {file_path}")
-        with open(file_path, "w") as file:
-            file.write(f"{str(total_points).zfill(4)}\n")
-            for coord in coordinates:
-                x_str = str(coord[0]).zfill(4)  # Добавляем нули спереди до 4 цифр
-                y_str = str(coord[1]).zfill(4)  # Добавляем нули спереди до 4 цифр
-                file.write(f"{x_str} {y_str}\n")
-
-
 
 def clear_console():
     """
